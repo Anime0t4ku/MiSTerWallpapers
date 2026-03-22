@@ -9,10 +9,9 @@ from pathlib import Path
 
 REPO_RAW_BASE = os.environ.get("REPO_RAW_BASE", "").rstrip("/")
 
-
-DISPLAY_NAMES = {
-    "0t4kuwallpapers": "Anime0t4ku Wallpapers",
-    "pcnchallenge": "PCN Challenge Wallpapers"
+DB_IDS = {
+    "0t4kuwallpapers": "anime0t4ku_wallpapers",
+    "pcnchallenge": "pcn_challenge_wallpapers"
 }
 
 
@@ -36,8 +35,7 @@ def build_db(source_dir: str, output_zip: str):
             continue
 
         rel_path = file_path.relative_to(source).as_posix()
-
-        # Install into MiSTer wallpapers folder
+        
         mister_path = f"wallpapers/{Path(rel_path).name}"
 
         raw_url = f"{REPO_RAW_BASE}/{source.name}/{rel_path}"
@@ -52,8 +50,7 @@ def build_db(source_dir: str, output_zip: str):
     db = {
         "base_files_url": "",
         "db_files": [],
-        "db_id": source.name,
-        "db_name": DISPLAY_NAMES.get(source.name, source.name),
+        "db_id": DB_IDS.get(source.name, source.name),
         "default_options": {},
         "files": files,
         "folders": {
