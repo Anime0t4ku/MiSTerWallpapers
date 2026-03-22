@@ -1,0 +1,70 @@
+name: Build wallpaper DBs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '0t4kuwallpapers/**'
+      - 'pcnchallenge/**'
+      - 'scripts/build_wallpaper_db.py'
+      - '.github/workflows/build-wallpaper-dbs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-dbs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build wallpaper DB zip files
+        env:
+          REPO_RAW_BASE: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}
+        run: |
+          rm -rf db
+          mkdir -p db
+
+          python scripts/build_wallpaper_db.py 0t4kuwallpapers db/0t4kuwallpapers.json.zip
+          python scripts/build_wallpaper_db.py pcnchallenge db/pcnchallenge.json.zip
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallpaper-dbs
+          path: db/*.json.zip
+
+      - name: Publish DB files to db branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          TEMP_DIR="$(mktemp -d)"
+          cp db/*.json.zip "$TEMP_DIR/"
+
+          git fetch origin
+
+          if git ls-remote --exit-code --heads origin db; then
+            git switch --create db-publish origin/db
+          else
+            git switch --orphan db-publish
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          mkdir -p db
+          find db -type f -name "*.json.zip" -delete
+
+          cp "$TEMP_DIR"/*.json.zip db/
+
+          git add db
+          git commit -m "Update wallpaper DB files" || exit 0
+          git push origin HEAD:db --force
