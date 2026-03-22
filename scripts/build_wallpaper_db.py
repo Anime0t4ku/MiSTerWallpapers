@@ -30,9 +30,7 @@ def build_db(source_dir: str, output_zip: str):
             continue
 
         rel_path = file_path.relative_to(source).as_posix()
-
-        # Install everything into /media/fat/wallpapers on MiSTer
-        # In DB json this should be relative to MiSTer's root, not an absolute /media/fat path
+        
         mister_path = f"wallpapers/{Path(rel_path).name}"
 
         raw_url = f"{REPO_RAW_BASE}/{source.name}/{rel_path}"
