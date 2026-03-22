@@ -31,17 +31,17 @@ jobs:
         env:
           REPO_RAW_BASE: https://raw.githubusercontent.com/Anime0t4ku/MiSTerWallpapers/main
         run: |
-          rm -rf db
-          mkdir -p db
+          rm -rf out
+          mkdir -p out
 
-          python scripts/build_wallpaper_db.py 0t4kuwallpapers db/0t4kuwallpapers.json.zip
-          python scripts/build_wallpaper_db.py pcnchallenge db/pcnchallenge.json.zip
+          python scripts/build_wallpaper_db.py 0t4kuwallpapers out/0t4kuwallpapers.json.zip
+          python scripts/build_wallpaper_db.py pcnchallenge out/pcnchallenge.json.zip
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:
           name: wallpaper-dbs
-          path: db/*.json.zip
+          path: out/*.json.zip
 
       - name: Publish DB files to db branch
         run: |
@@ -49,12 +49,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           TEMP_DIR="$(mktemp -d)"
-          cp db/*.json.zip "$TEMP_DIR/"
+          cp out/*.json.zip "$TEMP_DIR/"
 
           git fetch origin
 
           if git ls-remote --exit-code --heads origin db; then
-            git switch --create db-publish origin/db
+            git switch --create db-publish --track origin/db
           else
             git switch --orphan db-publish
             git rm -rf . >/dev/null 2>&1 || true
