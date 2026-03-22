@@ -1,50 +1,70 @@
 import json
 import os
 import sys
+import time
 import zipfile
+import hashlib
 from pathlib import Path
-from hashlib import sha1
+
 
 REPO_RAW_BASE = os.environ.get("REPO_RAW_BASE", "").rstrip("/")
 
-def file_hash_for_id(path: Path) -> str:
-    return sha1(str(path).encode("utf-8")).hexdigest()[:12]
+
+def md5_file(path: Path) -> str:
+    h = hashlib.md5()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
 
 def build_db(source_dir: str, output_zip: str):
     source = Path(source_dir)
     if not source.exists():
         raise FileNotFoundError(f"Source folder not found: {source_dir}")
 
-    db = {
-        "db_id": f"wallpapers_{source.name}",
-        "db_name": f"{source.name} Wallpapers",
-        "db_url": "",
-        "files": []
-    }
+    files = {}
 
     for file_path in sorted(source.rglob("*")):
         if not file_path.is_file():
             continue
 
         rel_path = file_path.relative_to(source).as_posix()
+
+        # Install everything into /media/fat/wallpapers on MiSTer
+        # In DB json this should be relative to MiSTer's root, not an absolute /media/fat path
+        mister_path = f"wallpapers/{Path(rel_path).name}"
+
         raw_url = f"{REPO_RAW_BASE}/{source.name}/{rel_path}"
 
-        db["files"].append({
-            "id": file_hash_for_id(file_path),
+        files[mister_path] = {
+            "hash": md5_file(file_path),
+            "size": file_path.stat().st_size,
             "url": raw_url,
-            "path": f"/media/fat/wallpapers/{Path(rel_path).name}",
-            "tags": ["wallpaper"],
-            "description": f"{source.name} wallpaper: {rel_path}"
-        })
+            "tags": ["wallpaper", source.name.lower()]
+        }
+
+    db = {
+        "base_files_url": "",
+        "db_files": [],
+        "db_id": source.name,
+        "default_options": {},
+        "files": files,
+        "folders": {
+            "wallpapers": {}
+        },
+        "timestamp": int(time.time()),
+        "zips": {}
+    }
 
     output_zip_path = Path(output_zip)
     output_zip_path.parent.mkdir(parents=True, exist_ok=True)
 
-    json_name = "db.json"
     with zipfile.ZipFile(output_zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr(json_name, json.dumps(db, indent=2))
+        zf.writestr("db.json", json.dumps(db, indent=2, sort_keys=True))
 
     print(f"Built {output_zip_path}")
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
