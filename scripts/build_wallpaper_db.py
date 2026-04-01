@@ -11,7 +11,8 @@ REPO_RAW_BASE = os.environ.get("REPO_RAW_BASE", "").rstrip("/")
 
 DB_IDS = {
     "0t4kuwallpapers": "anime0t4ku_wallpapers",
-    "pcnchallenge": "pcn_challenge_wallpapers"
+    "pcnchallenge": "pcn_challenge_wallpapers",
+    "pcnpremium": "pcn_premium_wallpapers"
 }
 
 
@@ -35,7 +36,7 @@ def build_db(source_dir: str, output_zip: str):
             continue
 
         rel_path = file_path.relative_to(source).as_posix()
-        
+
         mister_path = f"wallpapers/{Path(rel_path).name}"
 
         raw_url = f"{REPO_RAW_BASE}/{source.name}/{rel_path}"

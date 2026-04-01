@@ -7,6 +7,7 @@ on:
     paths:
       - '0t4kuwallpapers/**'
       - 'pcnchallenge/**'
+      - 'pcnpremium/**'
       - 'scripts/build_wallpaper_db.py'
       - '.github/workflows/build-wallpaper-dbs.yml'
   workflow_dispatch:
@@ -36,6 +37,7 @@ jobs:
 
           python scripts/build_wallpaper_db.py 0t4kuwallpapers out/0t4kuwallpapers.json.zip
           python scripts/build_wallpaper_db.py pcnchallenge out/pcnchallenge.json.zip
+          python scripts/build_wallpaper_db.py pcnpremium out/pcnpremium.json.zip
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
